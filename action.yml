@@ -31,14 +31,13 @@ runs:
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Linux' }}
     - run: |
-        mkdir Vulkan
         curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/mac/vulkan_sdk.zip'
         unzip -j vulkan_sdk.zip 'vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}' -d Vulkan
         ./Vulkan/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }} --root Vulkan --accept-licenses --default-answer --confirm-command install copy_only=1
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'macOS' }}
     - run: |
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'hhttps://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/windows/vulkan_sdk.exe'
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/windows/vulkan_sdk.exe'
         & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --confirm-command install
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && runner.arch == 'x64' }}
