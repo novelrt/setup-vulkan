@@ -1,0 +1,65 @@
+name: 'Setup Vulkan SDK'
+description: 'Sets up the Vulkan SDK for the given platform'
+
+inputs:
+  version:
+    description: 'Vulkan SDK version'
+    default: 'latest'
+    required: false
+
+runs:
+  using: composite
+  steps:
+    # Identify latest SDK version
+    - run: echo sdkVersion=$(curl 'https://vulkan.lunarg.com/sdk/latest/${{ (runner.os == 'Linux') && 'linux' || ((runner.os == 'macOS') && 'mac' || ((runner.os == 'Windows' && runner.arch == 'x64') && 'windows' || 'warm')) }}.txt') >> "$GITHUB_OUTPUT"
+      id: determineSdkVersion
+      if: ${{ inputs.version == 'latest' }}
+
+    # Attempt to load from cache
+    - name: Restore existing Vulkan SDK from cache
+      id: cache
+      uses: actions/cache
+      with:
+        path: Vulkan
+        key: vulkan-sdk-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
+
+    # Download and extract SDK if we failed to restore
+    - run: |
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.tar.xz 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/linux/vulkan_sdk.tar.xz'
+        tar -xf Vulkan/vulkan_sdk.tar.xz -C Vulkan --strip-components 2 ${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/x86_64
+      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Linux' }}
+    - run: |
+        mkdir Vulkan
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/mac/vulkan_sdk.zip'
+        unzip -j vulkan_sdk.zip 'vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}' -d Vulkan
+        ./Vulkan/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }} --root Vulkan --accept-licenses --default-answer --confirm-command install copy_only=1
+      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'macOS' }}
+    - run: |
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'hhttps://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/windows/vulkan_sdk.exe'
+        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --confirm-command install
+      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && runner.arch == 'x64' }}
+    - run: |
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/warm/vulkan_sdk.exe'
+        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --confirm-command install
+      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
+
+    # Setup environment variables
+    - run: |
+        VULKAN_SDK="$(pwd)/Vulkan"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "$(pwd)/Vulkan/bin" >> "$GITHUB_PATH"
+        echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+        echo "VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json" >> "$GITHUB_ENV"
+        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
+      if: ${{ runner.os == 'Linux' }}
+    - run: |
+        VULKAN_SDK="$(pwd)/Vulkan/macOS"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "$(pwd)/Vulkan/bin" >> "$GITHUB_PATH"
+        echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
+      if: ${{ runner.os == 'macOS' }}
+    # The windows installer supposedly sets this up for us.
+
+    # Verify installation
+    - run: vulkaninfo
