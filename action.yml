@@ -32,18 +32,18 @@ runs:
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Linux' }}
     - run: |
         curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/mac/vulkan_sdk.zip'
-        unzip -j Vulkan/vulkan_sdk.zip 'vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}' -d Vulkan
-        ./Vulkan/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }} --root Vulkan --accept-licenses --default-answer --confirm-command install copy_only=1
+        unzip -j Vulkan/vulkan_sdk.zip '*/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}' -d Vulkan
+        ./Vulkan/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }} --root Vulkan --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'macOS' }}
     - run: |
         curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/windows/vulkan_sdk.exe'
-        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --confirm-command install
+        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && runner.arch == 'x64' }}
     - run: |
         curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/warm/vulkan_sdk.exe'
-        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --confirm-command install
+        & Vulkan/vulkan_sdk.exe --root Vulkan --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
 
