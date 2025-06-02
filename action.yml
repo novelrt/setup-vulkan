@@ -12,13 +12,14 @@ runs:
   steps:
     # Identify latest SDK version
     - run: echo sdkVersion=$(curl 'https://vulkan.lunarg.com/sdk/latest/${{ (runner.os == 'Linux') && 'linux' || ((runner.os == 'macOS') && 'mac' || ((runner.os == 'Windows' && runner.arch == 'x64') && 'windows' || 'warm')) }}.txt') >> "$GITHUB_OUTPUT"
+      shell: bash
       id: determineSdkVersion
       if: ${{ inputs.version == 'latest' }}
 
     # Attempt to load from cache
     - name: Restore existing Vulkan SDK from cache
       id: cache
-      uses: actions/cache
+      uses: actions/cache@v4
       with:
         path: Vulkan
         key: vulkan-sdk-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
@@ -69,3 +70,4 @@ runs:
 
     # Verify installation
     - run: vulkaninfo
+      shell: bash
