@@ -34,7 +34,7 @@ runs:
     - run: |
         sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
         curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip "https://sdk.lunarg.com/sdk/download/$sdkVersion/mac/vulkan_sdk.zip"
-        ditto -xk Vulkan/vulkan_sdk.zip -d Vulkan
+        ditto -xk Vulkan/vulkan_sdk.zip Vulkan
         appRoot = "./Vulkan/vulkansdk-macOS-$sdkVersion.app"
         installer = "$appRoot/Contents/MacOS/vulkansdk-macOS-$sdkVersion"
         $installer --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
