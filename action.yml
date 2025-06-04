@@ -56,7 +56,7 @@ runs:
     # Setup environment variables
     - run: |
         VULKAN_SDK="$(pwd)/Vulkan"
-        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
         echo "$(pwd)/Vulkan/bin" >> "$GITHUB_PATH"
         echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
         echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
@@ -64,7 +64,13 @@ runs:
       if: ${{ runner.os == 'Linux' }}
     - run: |
         VULKAN_SDK="$(pwd)/Vulkan/macOS"
-        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
+        if test -f $VULKAN_SDK/lib//libvulkan.dylib; then
+          echo "Found valid Vulkan library!"
+        else
+          echo "Could not find valid Vulkan library!"
+          exit -1
+        fi
         echo "$(pwd)/Vulkan/bin" >> "$GITHUB_PATH"
         echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
         echo "VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json" >> "$GITHUB_ENV"
