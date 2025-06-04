@@ -71,4 +71,9 @@ runs:
         echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
       shell: bash
       if: ${{ runner.os == 'macOS' }}
-    # The windows installer supposedly sets this up for us.
+    - run: |
+        echo "VULKAN_SDK=$Env:VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "${Env:VULKAN_SDK}\\Bin" >> "$GITHUB_PATH"
+        echo "VK_LAYER_PATH=${Env:VULKAN_SDK}\\Bin" >> "$GITHUB_ENV"
+      shell: pwsh
+      if: ${{ runner.os == 'Windows' }}
