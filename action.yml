@@ -26,23 +26,29 @@ runs:
 
     # Download and extract SDK if we failed to restore
     - run: |
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.tar.xz 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/linux/vulkan_sdk.tar.xz'
-        tar -xf Vulkan/vulkan_sdk.tar.xz -C Vulkan --strip-components 2 ${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/x86_64
+        sdkVersion = '${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.tar.xz "https://sdk.lunarg.com/sdk/download/$sdkVersion/linux/vulkan_sdk.tar.xz"
+        tar -xf Vulkan/vulkan_sdk.tar.xz -C Vulkan --strip-components 2 "$sdkVersion/x86_64"
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Linux' }}
     - run: |
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/mac/vulkan_sdk.zip'
-        unzip -j Vulkan/vulkan_sdk.zip '*/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}' -d Vulkan
-        ./Vulkan/vulkansdk-macOS-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }} --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
+        sdkVersion = '${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip "https://sdk.lunarg.com/sdk/download/$sdkVersion/mac/vulkan_sdk.zip"
+        ditto -xk Vulkan/vulkan_sdk.zip -d Vulkan
+        appRoot = "./Vulkan/vulkansdk-macOS-$sdkVersion.app"
+        installer = "$appRoot/Contents/MacOS/vulkansdk-macOS-$sdkVersion"
+        $installer --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
       shell: bash
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'macOS' }}
     - run: |
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/windows/vulkan_sdk.exe'
+        sdkVersion = '${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
         & Vulkan/vulkan_sdk.exe --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && runner.arch == 'x64' }}
     - run: |
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe 'https://sdk.lunarg.com/sdk/download/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/warm/vulkan_sdk.exe'
+        sdkVersion = '${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
+        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
         & Vulkan/vulkan_sdk.exe --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
