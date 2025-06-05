@@ -28,4 +28,16 @@ jobs:
           if [[ -x "$(command -v vkvia)" ]]; then
             vkvia --disable_cube_tests;
           fi
+
+          echo "Vulkan SDK: $VULKAN_SDK"
+          echo "PATH: $PATH"
+
+          echo "LD_LIBRARY_PATH: $LD_LIBRARY_PATH"
+          echo "DYLD_LIBRARY_PATH: $DYLD_LIBRARY_PATH"
+
+          echo "VK_ICD_FILENAMES: $VK_ICD_FILENAMES"
+
+          echo "VK_ADD_LAYER_PATH: $VK_ADD_LAYER_PATH"
+
+          echo "VK_LAYER_PATH: $VK_LAYER_PATH"
         shell: bash
