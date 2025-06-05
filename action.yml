@@ -79,7 +79,7 @@ runs:
       if: ${{ runner.os == 'macOS' }}
     - run: |
         $Env:VULKAN_SDK="${pwd}\\Vulkan"
-        echo "VULKAN_SDK=$Env:VULKAN_SDK" >> $GITHUB_ENV
+        echo "VULKAN_SDK=${Env:VULKAN_SDK}" >> $GITHUB_ENV
         echo "${Env:VULKAN_SDK}\\Bin" >> $GITHUB_PATH
         echo "VK_LAYER_PATH=${Env:VULKAN_SDK}\\Bin" >> $GITHUB_ENV
       shell: pwsh
