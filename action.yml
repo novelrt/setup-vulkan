@@ -85,7 +85,7 @@ runs:
       shell: bash
       if: ${{ runner.os == 'macOS' }}
     - run: |
-        $VULKAN_SDK="$RUNNER_TOOL_CACHE\\vulkan\\${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
+        $VULKAN_SDK="${Env:RUNNER_TOOL_CACHE}\\vulkan\\${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
         echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
         echo "$VULKAN_SDK\\Bin" >> $GITHUB_PATH
         echo "VK_LAYER_PATH=$VULKAN_SDK\\Bin" >> $GITHUB_ENV

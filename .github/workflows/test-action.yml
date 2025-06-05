@@ -23,48 +23,6 @@ jobs:
       - uses: ./
         with:
           version: ${{ matrix.vulkan }}
-      - name: Build Vulkan Installation Analyzer
-        if: ${{ runner.os == 'Linux' }}
-        run: |
-          sudo apt-get update
-          sudo apt-get install libglm-dev cmake libxcb-dri3-0 libxcb-present0 libpciaccess0 \
-            libpng-dev libxcb-keysyms1-dev libxcb-dri3-dev libx11-dev g++ gcc \
-            libwayland-dev libxrandr-dev libxcb-randr0-dev libxcb-ewmh-dev \
-            git python-is-python3 bison libx11-xcb-dev liblz4-dev libzstd-dev \
-            ocaml-core ninja-build pkg-config libxml2-dev wayland-protocols python3-jsonschema \
-            clang-format qtbase5-dev qt6-base-dev
-
-          $VULKAN_SDK/vulkansdk --maxjobs lunarg-tools
-
-          # We need to roughly duplicate what the SDK script does here because it doesn't specify BUILD_VIA
-          SDKDIR="$(dirname "${VULKAN_SDK}")"
-          ARCH="$(uname -m)"
-          ARCHDIR="${SDKDIR}/${ARCH}"
-          SOURCEDIR="${SDKDIR}"/source
-
-          LGVT_DIR="${SOURCEDIR}"/VulkanTools
-          JSONCPP_DIR="${SOURCEDIR}"/jsoncpp
-          VALIJSON_DIR="${SOURCEDIR}"/valijson
-
-          BUILD_DIR="build"
-          BUILD_RELDEBINFO_TYPE="RelWithDebInfo"
-
-          NUMJOBS="$(expr $(nproc) - 1)"
-
-          cmake -S "${LGVT_DIR}" \
-            -B "${LGVT_DIR}/${BUILD_DIR}" \
-            -DCMAKE_BUILD_TYPE="$BUILD_RELDEBINFO_TYPE" \
-            -DCMAKE_INSTALL_LIBDIR="lib" \
-            -DVULKAN_HEADERS_INSTALL_DIR="$ARCHDIR" \
-            -DVULKAN_LOADER_INSTALL_DIR="$ARCHDIR" \
-            -DVULKAN_UTILITY_LIBRARIES_INSTALL_DIR="$ARCHDIR" \
-            -DJSONCPP_INSTALL_DIR="${JSONCPP_DIR}/${BUILD_DIR}/install/" \
-            -DVALIJSON_INSTALL_DIR="${VALIJSON_DIR}/${BUILD_DIR}/install/" \
-            -DBUILD_TESTS="OFF" \
-            -DBUILD_VIA="ON" \
-            --install-prefix "$ARCHDIR"
-          cmake --build "${LGVT_DIR}/${BUILD_DIR}" -j $NUMJOBS
-          cmake --install "${LGVT_DIR}/${BUILD_DIR}"
       - name: Verify SDK install
         run: |
           if [[ -x "$(command -v vkvia)" ]]; then
