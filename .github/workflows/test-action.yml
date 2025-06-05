@@ -10,7 +10,6 @@ on:
 jobs:
   install:
     name: Install Vulkan
-    needs: retrieve-sdk-versions
     runs-on: ${{ matrix.os }}
 
     strategy:
