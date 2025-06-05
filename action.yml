@@ -69,25 +69,25 @@ runs:
     # Setup environment variables
     - run: |
         VULKAN_SDK="$RUNNER_TOOL_CACHE/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
-        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
-        echo "$(pwd)/Vulkan/bin" >> $GITHUB_PATH
-        echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> $GITHUB_ENV
-        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> $GITHUB_ENV
+        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "$(pwd)/Vulkan/bin" >> "$GITHUB_PATH"
+        echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
       shell: bash
       if: ${{ runner.os == 'Linux' }}
     - run: |
         VULKAN_SDK="$RUNNER_TOOL_CACHE/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/macos"
-        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
-        echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
-        echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
-        echo "VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
-        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> $GITHUB_ENV
+        echo "VULKAN_SDK=$VULKAN_SDK" >> "$GITHUB_ENV"
+        echo "$VULKAN_SDK/bin" >> "$GITHUB_PATH"
+        echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" >> "$GITHUB_ENV"
+        echo "VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json" >> "$GITHUB_ENV"
+        echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> "$GITHUB_ENV"
       shell: bash
       if: ${{ runner.os == 'macOS' }}
     - run: |
         $VULKAN_SDK="${Env:RUNNER_TOOL_CACHE}\\vulkan\\${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
-        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
-        echo "$VULKAN_SDK\\Bin" >> $GITHUB_PATH
-        echo "VK_LAYER_PATH=$VULKAN_SDK\\Bin" >> $GITHUB_ENV
+        echo "VULKAN_SDK=$VULKAN_SDK" >> "${Env:GITHUB_ENV}"
+        echo "$VULKAN_SDK\\Bin" >> "${Env:GITHUB_PATH}"
+        echo "VK_LAYER_PATH=$VULKAN_SDK\\Bin" >> "${Env:GITHUB_ENV}"
       shell: pwsh
       if: ${{ runner.os == 'Windows' }}
