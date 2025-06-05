@@ -45,16 +45,16 @@ runs:
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' && runner.os == 'macOS' }}
     - run: |
         $sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL -o "$RUNNER_TEMP/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
-        $null = New-Item -ItemType Directory -Force -Path "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion"
-        & "$RUNNER_TEMP/vulkan_sdk.exe" --root "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
+        curl -sSL -o "${Env:RUNNER_TEMP}/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
+        $null = New-Item -ItemType Directory -Force -Path "${Env:RUNNER_TOOL_CACHE}/vulkan/$sdkVersion"
+        & "${Env:RUNNER_TEMP}/vulkan_sdk.exe" --root "${Env:RUNNER_TOOL_CACHE}/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' && runner.os == 'Windows' && runner.arch == 'x64' }}
     - run: |
         $sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL -o "$RUNNER_TEMP/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/warm/vulkan_sdk.exe"
-        $null = New-Item -ItemType Directory -Force -Path "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion"
-        & "$RUNNER_TEMP/vulkan_sdk.exe" --root "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
+        curl -sSL -o "${Env:RUNNER_TEMP}/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/warm/vulkan_sdk.exe"
+        $null = New-Item -ItemType Directory -Force -Path "${Env:RUNNER_TOOL_CACHE}/vulkan/$sdkVersion"
+        & "${Env:RUNNER_TEMP}/vulkan_sdk.exe" --root "${Env:RUNNER_TOOL_CACHE}/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
       if: ${{ steps.cache-restore.outputs.cache-hit != 'true' && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
 
@@ -64,6 +64,7 @@ runs:
       with:
         path: ${{ runner.tool_cache }}/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
         key: ${{ steps.cache-restore.outputs.cache-primary-key }}
+      if: ${{ steps.cache-restore.outputs.cache-hit != 'true' }}
 
     # Setup environment variables
     - run: |
