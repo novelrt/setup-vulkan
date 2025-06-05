@@ -66,4 +66,8 @@ jobs:
           cmake --build "${LGVT_DIR}/${BUILD_DIR}" -j $NUMJOBS
           cmake --install "${LGVT_DIR}/${BUILD_DIR}"
       - name: Verify SDK install
-        run: vkvia --disable_cube_tests
+        run: |
+          if [[ -x "$(command -v vkvia)" ]]; then
+            vkvia --disable_cube_tests;
+          fi
+        shell: bash

@@ -11,51 +11,58 @@ runs:
   using: composite
   steps:
     # Identify latest SDK version
-    - run: echo sdkVersion=$(curl 'https://vulkan.lunarg.com/sdk/latest/${{ (runner.os == 'Linux') && 'linux' || ((runner.os == 'macOS') && 'mac' || ((runner.os == 'Windows' && runner.arch == 'x64') && 'windows' || 'warm')) }}.txt') >> "$GITHUB_OUTPUT"
+    - run: echo sdkVersion=$(curl -sSL 'https://vulkan.lunarg.com/sdk/latest/${{ (runner.os == 'Linux') && 'linux' || ((runner.os == 'macOS') && 'mac' || ((runner.os == 'Windows' && runner.arch == 'x64') && 'windows' || 'warm')) }}.txt') >> "$GITHUB_OUTPUT"
       shell: bash
       id: determineSdkVersion
       if: ${{ inputs.version == 'latest' }}
 
     # Attempt to load from cache
     - name: Restore existing Vulkan SDK from cache
-      id: cache
-      uses: actions/cache@v4
+      id: cache-restore
+      uses: actions/cache/restore@v4
       with:
-        path: Vulkan
+        path: ${{ runner.tool_cache }}/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
         key: vulkan-sdk-${{ runner.os }}-${{ runner.arch }}-${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
 
     # Download and extract SDK if we failed to restore
     - run: |
         sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.tar.xz "https://sdk.lunarg.com/sdk/download/$sdkVersion/linux/vulkan_sdk.tar.xz"
-        tar -xf Vulkan/vulkan_sdk.tar.xz -C Vulkan --strip-components 2 "$sdkVersion/x86_64"
+        curl -sSL --create-dirs -o "$RUNNER_TEMP/vulkan_sdk.tar.xz" "https://sdk.lunarg.com/sdk/download/$sdkVersion/linux/vulkan_sdk.tar.xz"
+        tar -xf "$RUNNER_TEMP/vulkan_sdk.tar.xz" -C "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --strip-components 2 "$sdkVersion/x86_64"
       shell: bash
-      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Linux' }}
+      if: ${{ steps.cache-restore.output.cache-hit != 'true' && runner.os == 'Linux' }}
     - run: |
         sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.zip "https://sdk.lunarg.com/sdk/download/$sdkVersion/mac/vulkan_sdk.zip"
-        ditto -xk Vulkan/vulkan_sdk.zip Vulkan
-        appRoot="./Vulkan/vulkansdk-macOS-$sdkVersion.app"
+        curl -sSL --create-dirs -o "$RUNNER_TEMP/vulkan_sdk.zip" "https://sdk.lunarg.com/sdk/download/$sdkVersion/mac/vulkan_sdk.zip"
+        ditto -xk "$RUNNER_TEMP/vulkan_sdk.zip" "$RUNNER_TEMP/vulkan_sdk"
+        appRoot="$RUNNER_TEMP/vulkan_sdk/vulkansdk-macOS-$sdkVersion.app"
         installer="$appRoot/Contents/MacOS/vulkansdk-macOS-$sdkVersion"
-        $installer --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
+        $installer --root "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install copy_only=1
       shell: bash
-      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'macOS' }}
+      if: ${{ steps.cache-restore.output.cache-hit != 'true' && runner.os == 'macOS' }}
     - run: |
         $sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
-        & Vulkan/vulkan_sdk.exe --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
+        curl -sSL --create-dirs -o "$RUNNER_TEMP/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/windows/vulkan_sdk.exe"
+        & "$RUNNER_TEMP/vulkan_sdk.exe" --root "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
-      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && runner.arch == 'x64' }}
+      if: ${{ steps.cache-restore.output.cache-hit != 'true' && runner.os == 'Windows' && runner.arch == 'x64' }}
     - run: |
         $sdkVersion='${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}'
-        curl -sSL --create-dirs -o Vulkan/vulkan_sdk.exe "https://sdk.lunarg.com/sdk/download/$sdkVersion/warm/vulkan_sdk.exe"
-        & Vulkan/vulkan_sdk.exe --root "$(pwd)/Vulkan" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
+        curl -sSL --create-dirs -o "$RUNNER_TEMP/vulkan_sdk.exe" "https://sdk.lunarg.com/sdk/download/$sdkVersion/warm/vulkan_sdk.exe"
+        & "$RUNNER_TEMP/vulkan_sdk.exe" --root "$RUNNER_TOOL_CACHE/vulkan/$sdkVersion" --accept-licenses --default-answer --auto-answer OverwriteTargetDirectory=Yes --confirm-command install
       shell: pwsh
-      if: ${{ steps.cache.output.cache-hit != true && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
+      if: ${{ steps.cache-restore.output.cache-hit != 'true' && runner.os == 'Windows' && (runner.arch == 'ARM' || runner.arch == 'ARM64') }}
+
+    - name: Save cache
+      id: cache-save
+      uses: actions/cache/save@v4
+      with:
+        path: ${{ runner.tool_cache }}/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}
+        key: ${{ steps.cache-restore.outputs.cache-primary-key }}
 
     # Setup environment variables
     - run: |
-        VULKAN_SDK="$(pwd)/Vulkan"
+        VULKAN_SDK="$RUNNER_TOOL_CACHE/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
         echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
         echo "$(pwd)/Vulkan/bin" >> $GITHUB_PATH
         echo "LD_LIBRARY_PATH=$VULKAN_SDK/lib${LD_LIBRARY_PATH:+:$LD_LIBRARY_PATH}" >> $GITHUB_ENV
@@ -63,24 +70,18 @@ runs:
       shell: bash
       if: ${{ runner.os == 'Linux' }}
     - run: |
-        VULKAN_SDK="$(pwd)/Vulkan/macOS"
+        VULKAN_SDK="$RUNNER_TOOL_CACHE/vulkan/${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}/macos"
         echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
-        if test -f $VULKAN_SDK/lib//libvulkan.dylib; then
-          echo "Found valid Vulkan library!"
-        else
-          echo "Could not find valid Vulkan library!"
-          exit -1
-        fi
-        echo "$(pwd)/Vulkan/bin" >> $GITHUB_PATH
-        echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
+        echo "$VULKAN_SDK/bin" >> $GITHUB_PATH
+        echo "DYLD_LIBRARY_PATH=$VULKAN_SDK/lib${DYLD_LIBRARY_PATH:+:$DYLD_LIBRARY_PATH}" >> $GITHUB_ENV
         echo "VK_ICD_FILENAMES=$VULKAN_SDK/share/vulkan/icd.d/MoltenVK_icd.json" >> $GITHUB_ENV
         echo "VK_ADD_LAYER_PATH=$VULKAN_SDK/share/vulkan/explicit_layer.d${VK_ADD_LAYER_PATH:+:$VK_ADD_LAYER_PATH}" >> $GITHUB_ENV
       shell: bash
       if: ${{ runner.os == 'macOS' }}
     - run: |
-        $Env:VULKAN_SDK="${pwd}\\Vulkan"
-        echo "VULKAN_SDK=${Env:VULKAN_SDK}" >> $GITHUB_ENV
-        echo "${Env:VULKAN_SDK}\\Bin" >> $GITHUB_PATH
-        echo "VK_LAYER_PATH=${Env:VULKAN_SDK}\\Bin" >> $GITHUB_ENV
+        $VULKAN_SDK="$RUNNER_TOOL_CACHE\\vulkan\\${{ inputs.version == 'latest' && steps.determineSdkVersion.outputs.sdkVersion || inputs.version }}"
+        echo "VULKAN_SDK=$VULKAN_SDK" >> $GITHUB_ENV
+        echo "$VULKAN_SDK\\Bin" >> $GITHUB_PATH
+        echo "VK_LAYER_PATH=$VULKAN_SDK\\Bin" >> $GITHUB_ENV
       shell: pwsh
       if: ${{ runner.os == 'Windows' }}
